@@ -4,21 +4,323 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <title>Document</title>
+    <title>ETF Builder</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+<style>
+    html, body{
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        min-height: 100%;
+    }
+    body{
+        display: flex;
+        flex-direction: column;
+    }
+    header{
+        background-color: #4CAF50;
+        color: #FFFFFF;
+        padding: 20px;
+        border-bottom: 4px solid #388E3C;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    h1{
+        margin: 0;
+        font-size: 2.5em;
+        font-style: italic;
+
+        
+    }
+
+    .header-main {
+        display:flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .header-links{
+        display:flex;
+        align-items: center;
+    }
+
+    .About{
+        font-size: 1.0em;
+        font-style: normal;
+        margin-top: 10px;
+    }
+    .About a{
+        color: #FFFFFF;
+        text-decoration: none;
+    }
+    .About a:hover{
+        text-decoration: underline;
+    }
+
+    .Build-Your-Portfolio, .Profile, .Log-Out{
+        font-size: 1.2em;
+        font-style: normal;
+
+    }
+    .Build-Your-Portfolio a, .Profile a, .Log-Out a {
+        color: #FFFFFF;
+        text-decoration: none; 
+    }
+    .Build-Your-Portfolio a:hover,.Profile a:hover,.Log-Out a:hover {
+        text-decoration: underline;
+    }
+    
+    .content-container{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex:1;
+    }
+
+    .section{
+        padding: 20px;
+    }
+
+    #section1{
+        margin-top: auto;
+    }
+
+    .vertical-line{
+        width: .5px;
+        background-color: #FFFFFF;
+        height: 50px;
+
+    }
+
+    .bottom-anchor{
+        height: 0;
+    }
+
+    .search-container{
+        position: absolute;
+        right: 100px;
+    }
+
+    .search-container input[type = "text"]{
+        padding: 8px;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .search-box{
+        position: relative;
+        display: incline-block;
+        margin-top: 20px;
+    }
+
+    .search-box input[type = "text"]{
+        padding: 8px;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 200px;
+    }
+
+    .dropdown{
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        z-index: 1;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .dropdown div{
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .dropdown div:hover{
+        background-color: #f0f0f0;
+    }
+
+    .search-box.active .dropdown{
+        display: block;
+    }
+
+    .table-container{
+        display: none;
+        margin-top: 10px;
+        position: relative;
+        width: 100%;
+        background-color: #fff;
+        border: 1px solid #ccc;
+    }
+
+    .table-container table{
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-container th, .table-container td{
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+    }
+
+    .table-container th{
+        background-color: #f2f2f2;
+    }
+
+
+</style>
 </head>
 <body>
-    <h1> 
-        <em> Website builder </em>
-     </h1>
+    <header>
+        <div class = "header-main">
+            <h1><a href = "index.html" style = "color: #FFFFFF; text-decoration: none;">ETF Builder</a></h1>
+            <span class="Build-Your-Portfolio"><a href="#Build-Your-Portfolio">Build Your Portfolio</a></span>
+            <div class = "vertical-line"></div>
+            <span class = "Profile"><a href = "#Profile"> Profile</a></span>
+            <div class = "vertical-line"></div>
+            <span class = "Log-Out"><a href = "#Log-Out"> Log Out</a></span>
+            <div class = "search-container">
+                <form action = "/search" method= "get">
+                    <input type = "text" name = "query" placeholder = "Search...">
+                </form>
+            </div>
+        </div>
+        <span class="About"><a href="#section1">About</a></span>
+    </header>
+    <div id="About" class="section">
+        <h2></h2>
+        <p></p>
+    </div>
+    <div class = "content-container">
+        <div id = "Build-Your-Portfolio" class = "header">
+            <h2>Portfolio Builder</h2>
+            <p>Browse ETFs and customize your portfolio to maximize diversity</p>
 
-    <hr> Stuff to put here... <hr>
-    
-    <button onclick = "window.location.href = 'https://finance.yahoo.com';"> Yahoo Finance </button>
+            <div class = "search-box">
+                <input type = "text" placeholder = "Search..." id = "search-input">
+                <div class = "dropdown" id = "dropdown">
+                    <div>Vanguard</div>
+                    <div>BlackRock</div>
+                    <div>Invesco</div>
+                    <div>State Street</div>
+                  <div>Charles Schwab</div>
+                </div>
+            </div>
+            
+            <div id = "table-container" class="table-container">
+                <table id = "table">
+                    <thead>
+                        <tr>
+                            <th>ETF Name</th>
+                            <th>Investment Focus</th>
+                            <th>ETF Category</th>
+                            <th>Investment Sector</th>
+                        </tr>
+                    </thead>
+                    <tbody>
 
-    <img src = "Screenshot 2023-12-12 220600.png" alt = "Lego Minecraft" width = "200", height = "200"/>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id = "bottom-anchor" class = "bottom-anchor"></div>
 
-    <p> a paragraph about stuff </p>
+    <script>
+        const searchInput = document.getElementById('search-input');
+        const dropdown = document.getElementById('dropdown');
+        const tableContainer = document.getElementById('table-container');
+        const tableBody = document.querySelector('#table tbody');
+
+        const etfData ={
+            'Vanguard': [
+        { name: 'VTI', 'Investment Focus': 'Total Stock Market', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'VOO', 'Investment Focus': 'S&P 500', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'VUG', 'Investment Focus': 'Growth', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'VYM', 'Investment Focus': 'High Dividend Yield', 'ETF Category': 'Dividend', 'Investment Sector': 'Utilities Heavy' },
+        { name: 'VB', 'Investment Focus': 'Small-Cap', 'ETF Category': 'Index', 'Investment Sector': 'Small-Cap' }
+    ],
+    'BlackRock': [
+        { name: 'IVV', 'Investment Focus': 'S&P 500', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'AGG', 'Investment Focus': 'US Aggregate Bond', 'ETF Category': 'Bond', 'Investment Sector': 'Fixed Income' },
+        { name: 'IWB', 'Investment Focus': 'Russell 1000', 'ETF Category': 'Index', 'Investment Sector': 'Large-Cap' },
+        { name: 'IEMG', 'Investment Focus': 'Emerging Markets', 'ETF Category': 'Index', 'Investment Sector': 'Emerging Markets' },
+        { name: 'BLK', 'Investment Focus': 'Global X MSCI China', 'ETF Category': 'Index', 'Investment Sector': 'China' }
+    ],
+    'Invesco': [
+        { name: 'QQQ', 'Investment Focus': 'NASDAQ 100', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'SPHD', 'Investment Focus': 'High Dividend Low Volatility', 'ETF Category': 'Index', 'Investment Sector': 'Utilities Heavy' },
+        { name: 'IVZ', 'Investment Focus': 'Emerging Markets', 'ETF Category': 'Index', 'Investment Sector': 'Emerging Markets' },
+        { name: 'XLP', 'Investment Focus': 'Consumer Staples', 'ETF Category': 'Sector', 'Investment Sector': 'Consumer Staples' },
+        { name: 'XLB', 'Investment Focus': 'Materials', 'ETF Category': 'Sector', 'Investment Sector': 'Materials' }
+    ],
+    'State Street': [
+        { name: 'SPY', 'Investment Focus': 'S&P 500', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'XLF', 'Investment Focus': 'Financial Sector', 'ETF Category': 'Sector', 'Investment Sector': 'Financials' },
+        { name: 'XLY', 'Investment Focus': 'Consumer Discretionary', 'ETF Category': 'Sector', 'Investment Sector': 'Consumer Discretionary' },
+        { name: 'XLI', 'Investment Focus': 'Industrial Sector', 'ETF Category': 'Sector', 'Investment Sector': 'Industrials' },
+        { name: 'XLB', 'Investment Focus': 'Basic Materials', 'ETF Category': 'Sector', 'Investment Sector': 'Materials' }
+    ],
+    'Charles Schwab': [
+        { name: 'SCHB', 'Investment Focus': 'Broad US Market', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' },
+        { name: 'SCHD', 'Investment Focus': 'US Dividend Equity', 'ETF Category': 'Dividend', 'Investment Sector': 'Utilities Heavy' },
+        { name: 'SCHA', 'Investment Focus': 'Small-Cap', 'ETF Category': 'Index', 'Investment Sector': 'Small-Cap' },
+        { name: 'SCHF', 'Investment Focus': 'International Developed Markets', 'ETF Category': 'Index', 'Investment Sector': 'International' },
+        { name: 'SCHG', 'Investment Focus': 'US Growth', 'ETF Category': 'Index', 'Investment Sector': 'Technology Heavy' }
+    ]
+
+        };
 
 
+        searchInput.addEventListener('focus', () => {
+            document.querySelector('.search-box').classList.add('active');
+        });
+
+        searchInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                document.querySelector('.search-box').classList.remove('active');
+            }, 200);
+        });
+
+        dropdown.addEventListener('click', (event) =>{
+            if (event.target.tagName === 'DIV'){
+                searchInput.value = event.target.textContent;
+                document.querySelector('.search-box').classList.remove('active');
+                displayTable(event.target.textContent);
+            }
+        });
+
+        function displayTable(item){
+            tableBody.innerHTML = '';
+
+            const etfs = etfData[item];
+            if(etfs){
+                etfs.forEach(etf => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${etf.name}</td>
+                        <td>${etf['Investment Focus']}</td>
+                        <td>${etf['ETF Category']}</td>
+                        <td>${etf['Investment Sector']}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            tableContainer.style.display = 'block';
+        }
+    }
+
+    </script>
 </body>
 </html>
