@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ETF Builder</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#2196F3">
+    <meta name="theme-color" content="#2196F3">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-main">
+            <h1><a href="index.html" class="nav-link">ETF Builder</a></h1>
+            <div class="header-links">
+                <a href="#Build-Your-Portfolio" class="nav-link">Build Your Portfolio</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="#" class="nav-link" onclick="logout()">Log Out</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="content-container">
+        <div class="portfolio-header">
+            <h2>Portfolio Builder</h2>
+            <p>Browse ETFs and customize your portfolio to maximize diversity</p>
+        </div>
+
+        <div class="questionnaire-section">
+            <h3>Investment Profile Questionnaire</h3>
+            <p>Help us recommend the best ETFs for your investment strategy</p>
+            
+            <form id="investment-profile" class="investment-form">
+                <div class="form-group">
+                    <label>What is your risk tolerance?</label>
+                    <select name="riskTolerance" required>
+                        <option value="">Select an option</option>
+                        <option value="conservative">Conservative - Prefer stable, lower-risk investments</option>
+                        <option value="moderate">Moderate - Balance between growth and stability</option>
+                        <option value="aggressive">Aggressive - Willing to accept higher risk for higher returns</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>What is your investment timeline?</label>
+                    <select name="investmentTimeline" required>
+                        <option value="">Select an option</option>
+                        <option value="short">Short-term (1-3 years)</option>
+                        <option value="medium">Medium-term (4-7 years)</option>
+                        <option value="long">Long-term (8+ years)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>What is your primary investment goal?</label>
+                    <select name="investmentGoal" required>
+                        <option value="">Select an option</option>
+                        <option value="income">Generate regular income</option>
+                        <option value="growth">Long-term capital growth</option>
+                        <option value="balanced">Balanced between income and growth</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>How much investment experience do you have?</label>
+                    <select name="experience" required>
+                        <option value="">Select an option</option>
+                        <option value="beginner">Beginner - New to investing</option>
+                        <option value="intermediate">Intermediate - Some experience</option>
+                        <option value="advanced">Advanced - Experienced investor</option>
+                    </select>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" class="submit-button">Get Recommendations</button>
+                    <button type="button" class="save-preferences-btn">Save Preferences</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="search-box">
+            <input type="text" placeholder="Search for ETF provider..." id="search-input" class="search-input">
+            <div class="dropdown" id="dropdown">
+                <!-- Dropdown content -->
+            </div>
+        </div>
+        
+        <div id="table-container" class="table-container">
+            <table id="table">
+                <thead>
+                    <tr>
+                        <th>ETF Name</th>
+                        <th>Investment Focus</th>
+                        <th>ETF Category</th>
+                        <th>Investment Sector</th>
+                        <th>Expense Ratio</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="portfolio-section">
+            <div id="portfolio-container" class="portfolio-container">
+                <!-- Portfolio content will be inserted here -->
+            </div>
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <canvas id="sectorChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="riskChart"></canvas>
+                </div>
+                <div class="chart-wrapper performance-chart">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="portfolio-analytics">
+            <div class="analytics-card risk-metrics">
+                <h4>Risk Analysis</h4>
+                <div class="metric">
+                    <span>Risk Score</span>
+                    <span class="value" id="risk-score">-</span>
+                </div>
+                <div class="risk-gauge" id="risk-gauge"></div>
+            </div>
+            
+            <div class="analytics-card diversification">
+                <h4>Diversification</h4>
+                <div class="metric">
+                    <span>Overall Score</span>
+                    <span class="value" id="diversification-score">-</span>
+                </div>
+                <div class="metric">
+                    <span>Sectors Covered</span>
+                    <span class="value" id="sectors-covered">-</span>
+                </div>
+            </div>
+            
+            <div class="analytics-card expense-analysis">
+                <h4>Expense Analysis</h4>
+                <div class="metric">
+                    <span>Average Expense</span>
+                    <span class="value" id="avg-expense">-</span>
+                </div>
+                <div class="metric">
+                    <span>Potential Savings</span>
+                    <span class="value" id="potential-savings">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
