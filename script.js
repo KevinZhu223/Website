@@ -1270,4 +1270,15 @@ function getPortfolioOptimizationSuggestions() {
     // Add more sophisticated suggestions based on other metrics...
     
     return suggestions;
-} 
+}
+
+// Add this to prevent form default submission
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent form from submitting and refreshing
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    // Your existing login logic here
+    login(email, password);
+}); 
