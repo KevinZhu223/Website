@@ -1,8 +1,20 @@
 // Check if user is logged in
 function checkAuth() {
     const token = localStorage.getItem('auth_token');
-    if (!token && window.location.pathname !== '/login.html' && window.location.pathname !== '/register.html') {
+    const currentPath = window.location.pathname;
+    
+    // Get just the filename from the path
+    const page = currentPath.split('/').pop() || 'index.html';
+    
+    // Check if we're on login or register page
+    const isAuthPage = page === 'login.html' || page === 'register.html';
+    
+    if (!token && !isAuthPage) {
+        // Not logged in and not on auth page - redirect to login
         window.location.href = 'login.html';
+    } else if (token && isAuthPage) {
+        // Logged in but on auth page - redirect to main page
+        window.location.href = 'index.html';
     }
 }
 
