@@ -3,7 +3,10 @@ function checkAuth() {
     const token = localStorage.getItem('auth_token');
     const currentPath = window.location.pathname;
     
-    // Get just the filename from the path
+    // Check if we're on GitHub Pages (/Website/ in path)
+    const isGitHubPages = currentPath.includes('/Website/');
+    
+    // Get just the filename, handling both local and GitHub Pages paths
     const page = currentPath.split('/').pop() || 'index.html';
     
     // Check if we're on login or register page
@@ -11,10 +14,10 @@ function checkAuth() {
     
     if (!token && !isAuthPage) {
         // Not logged in and not on auth page - redirect to login
-        window.location.href = 'login.html';
+        window.location.href = isGitHubPages ? '/Website/login.html' : 'login.html';
     } else if (token && isAuthPage) {
         // Logged in but on auth page - redirect to main page
-        window.location.href = 'index.html';
+        window.location.href = isGitHubPages ? '/Website/index.html' : 'index.html';
     }
 }
 
