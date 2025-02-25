@@ -331,36 +331,69 @@ h1 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 30px;
-    margin-top: 30px;
-    padding: 20px;
+    margin: 30px 0;
+    padding: 30px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     width: 100%;
     box-sizing: border-box;
-    margin-right: 0;
-    margin-left: 0;
-    overflow: hidden;
 }
 
-/* Update chart wrapper styles */
+/* Update chart wrapper styles for different chart types */
 .chart-wrapper {
     position: relative;
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 15px;
-    min-height: 350px;
     width: 100%;
-    aspect-ratio: 16/9;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
     box-sizing: border-box;
 }
 
-/* Update performance chart specific styles */
+/* Specific style for the risk chart */
+#riskChart {
+    max-width: 80%;  /* Limit width to center the bars */
+    margin: 0 auto;
+}
+
+/* Style for timeframe buttons container */
+.timeframe-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    width: 100%;
+    position: relative;
+    padding: 10px;
+    background: white;
+    z-index: 1;
+}
+
+/* Update performance chart container */
 .performance-chart {
     grid-column: 1 / -1;
-    height: auto;
-    aspect-ratio: 21/9;
-    margin-top: 20px;
+    height: 800px !important;
+    min-height: 800px;
+    width: 100% !important;
+    max-width: 100%;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    aspect-ratio: 16/9;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chart-wrapper canvas {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 auto;
+    max-height: 100%;
 }
 
 /* Responsive adjustments */
@@ -369,24 +402,16 @@ h1 {
         max-width: 1800px;
     }
 
-    .chart-wrapper {
-        min-height: 500px;
-    }
-
     .performance-chart {
-        height: 800px;
+        height: 900px !important;
+        min-height: 900px;
     }
 }
 
 @media (max-width: 1200px) {
-    .charts-container {
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        padding: 15px;
-    }
-
-    .chart-wrapper {
-        min-height: 300px;
+    .performance-chart {
+        height: 600px !important;
+        min-height: 600px;
     }
 }
 
@@ -397,10 +422,6 @@ h1 {
 
     .content-container {
         padding: 0 15px;
-    }
-
-    .chart-wrapper {
-        min-height: 250px;
     }
 
     .performance-chart {
@@ -833,13 +854,6 @@ input:checked + .slider:before {
     margin-right: 6px;
 }
 
-.timeframe-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    justify-content: center;
-}
-
 .timeframe-btn {
     padding: 8px 16px;
     border: 1px solid #2196F3;
@@ -848,6 +862,7 @@ input:checked + .slider:before {
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 14px;
 }
 
 .timeframe-btn.active {
@@ -896,10 +911,23 @@ input:checked + .slider:before {
 
 .risk-gauge {
     height: 60px;
-    background: linear-gradient(to right, #4CAF50, #FFC107, #FF5722);
+    background: linear-gradient(to right, 
+        #4CAF50 0%,    /* Green for low risk (0-2.5) */
+        #FFC107 25%,   /* Yellow for moderate risk (2.5-5) */
+        #FF9800 50%,   /* Orange for moderate-high risk (5-7.5) */
+        #FF5722 75%    /* Red for high risk (7.5-10) */
+    );
     border-radius: 4px;
     margin-top: 10px;
     position: relative;
+}
+
+.risk-gauge::before {
+    content: '0';
+    position: absolute;
+    left: 0;
+    bottom: -25px;
+    font-size: 12px;
 }
 
 .risk-gauge::after {
@@ -912,6 +940,25 @@ input:checked + .slider:before {
     transform: translateX(-50%);
     transition: left 0.3s ease;
 }
+
+/* Add risk scale markers */
+.risk-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #666;
+}
+
+.risk-scale span {
+    position: absolute;
+    bottom: -25px;
+}
+
+.risk-scale span:nth-child(2) { left: 25%; }
+.risk-scale span:nth-child(3) { left: 50%; }
+.risk-scale span:nth-child(4) { left: 75%; }
+.risk-scale span:nth-child(5) { right: 0; }
 
 /* Add hover effects */
 .analytics-card {
@@ -941,4 +988,129 @@ input:checked + .slider:before {
     font-size: 0.9em;
     white-space: nowrap;
     z-index: 1000;
+}
+
+/* Add styles for the portfolio buttons */
+.portfolio-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.save-portfolio-btn, .clear-portfolio-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.save-portfolio-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.clear-portfolio-btn {
+    background-color: #FF5252;
+    color: white;
+}
+
+.save-portfolio-btn:hover {
+    background-color: #45a049;
+}
+
+.clear-portfolio-btn:hover {
+    background-color: #ff1744;
+}
+
+/* Add styles for the recommend portfolio button */
+.recommend-portfolio-btn {
+    background-color: #2196F3;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+.recommend-portfolio-btn:hover {
+    background-color: #1976D2;
+}
+
+/* Styles for recommendation modal */
+.recommended-etfs {
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.recommended-etf {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.etf-info h4 {
+    margin: 0 0 5px 0;
+    color: #2196F3;
+}
+
+.etf-info p {
+    margin: 3px 0;
+    color: #666;
+}
+
+.add-recommended-etf {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-recommended-etf:hover {
+    background-color: #45a049;
+}
+
+.add-recommended-etf:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.add-all-btn {
+    background-color: #2196F3;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-all-btn:hover {
+    background-color: #1976D2;
+}
+
+/* Add style for quick portfolio button */
+.quick-portfolio-btn {
+    background-color: #2196F3;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+.quick-portfolio-btn:hover {
+    background-color: #1976D2;
 }

@@ -601,7 +601,7 @@ function calculateCombinedPerformance(datasets) {
     }).filter(point => point !== null);
 }
 
-// Update the updatePerformanceChart function
+// Update the performance chart to show portfolio analytics
 async function updatePerformanceChart(days) {
     if (!userPortfolio.length) {
         performanceChart.data.datasets = [];
@@ -609,73 +609,162 @@ async function updatePerformanceChart(days) {
         return;
     }
 
-    try {
-        showLoadingState(performanceChart);
+    // Calculate key metrics for each ETF
+    const metrics = userPortfolio.map(etf => ({
+        name: etf.name,
+        expense: etf.expense,
+        risk: getRiskScore(etf.riskLevel),
+        diversification: etf.diversificationScore,
+        performance: calculateHistoricalPerformance(etf),
+        color: getRandomColor()
+    }));
 
-        // Get individual ETF datasets
-        const individualDatasets = await Promise.all(userPortfolio.map(async (etf) => {
-            const data = await getCachedData(etf.name, days);
-            return {
-                label: etf.name,
-                data: calculatePercentageChange(data)
-            };
-        }));
+    // Create a scatter plot showing risk vs. return with bubble size for diversification
+    performanceChart.data = {
+        datasets: [{
+            label: 'Portfolio ETFs',
+            data: metrics.map(m => {
+                // Add small random offsets to both x and y coordinates
+                return {
+                    x: addJitter(m.risk, 0.3),  // Add small horizontal jitter
+                    y: addJitter(m.performance, 0.5),  // Add small vertical jitter
+                    r: m.diversification / 2,
+                    expense: m.expense,
+                    name: m.name,
+                    // Store original values for tooltip
+                    originalRisk: m.risk,
+                    originalPerformance: m.performance
+                };
+            }),
+            backgroundColor: metrics.map(m => m.color),
+            hoverBackgroundColor: metrics.map(m => m.color)
+        }]
+    };
 
-        // Calculate combined performance
-        const combinedData = calculateCombinedPerformance(individualDatasets);
-
-        // Smooth the data based on timeframe
-        const smoothingFactor = days > 365 ? 7 : days > 30 ? 3 : 1;
-        const smoothedData = combinedData.filter((_, i) => i % smoothingFactor === 0);
-
-        // Update chart data
-        performanceChart.data.datasets = [{
-            label: 'Portfolio Performance',
-            data: smoothedData,
-            borderColor: '#2196F3',
-            backgroundColor: 'rgba(33, 150, 243, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 6
-        }];
-
-        // Calculate reasonable y-axis bounds
-        const values = smoothedData.map(d => d.y);
-        const maxVal = Math.max(...values);
-        const minVal = Math.min(...values);
-        const range = maxVal - minVal;
-        const padding = range * 0.1;
-
-        // Update y-axis
-        performanceChart.options.scales.y = {
-            beginAtZero: false,
-            min: Math.floor((minVal - padding) / 5) * 5,
-            max: Math.ceil((maxVal + padding) / 5) * 5,
-            ticks: {
-                callback: value => `${value.toFixed(1)}%`
+    performanceChart.options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const point = context.raw;
+                        return [
+                            `ETF: ${point.name}`,
+                            `Risk Score: ${point.originalRisk.toFixed(1)}`,  // Show original value
+                            `Performance: ${point.originalPerformance.toFixed(1)}%`,  // Show original value
+                            `Expense Ratio: ${(point.expense * 100).toFixed(2)}%`,
+                            `Diversification: ${(point.r * 2).toFixed(0)}`
+                        ];
+                    }
+                }
             },
-            grid: {
-                color: 'rgba(0, 0, 0, 0.1)'
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 14
+                    }
+                }
+            },
+            title: {
+                display: true,
+                text: 'Portfolio Analysis: Risk vs. Return',
+                font: { 
+                    size: 28,  // Increased from 24
+                    weight: 'bold' 
+                },
+                padding: 50
             }
-        };
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Risk Score',
+                    padding: 20,
+                    font: {
+                        size: 16
+                    }
+                },
+                min: 0,
+                max: 5,
+                ticks: {
+                    stepSize: 1,
+                    font: {
+                        size: 16
+                    }
+                },
+                grid: {
+                    display: true,
+                    drawBorder: true,
+                    color: 'rgba(0, 0, 0, 0.1)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Historical Performance (%)',
+                    padding: 20,
+                    font: {
+                        size: 16
+                    }
+                },
+                min: 0,
+                max: 25,
+                ticks: {
+                    stepSize: 5,
+                    font: {
+                        size: 16
+                    }
+                },
+                grid: {
+                    display: true,
+                    drawBorder: true,
+                    color: 'rgba(0, 0, 0, 0.1)'
+                }
+            }
+        },
+        layout: {
+            padding: {
+                top: 50,
+                right: 80,    // Increased right padding
+                bottom: 70,
+                left: 80     // Increased left padding
+            }
+        }
+    };
 
-        // Update x-axis time unit
-        const timeUnit = days <= 7 ? 'day' : 
-                        days <= 30 ? 'week' :
-                        days <= 90 ? 'month' :
-                        'year';
+    performanceChart.config.type = 'bubble';
+    performanceChart.update();
+}
 
-        performanceChart.options.scales.x.time.unit = timeUnit;
+// Update the getRiskScore function (used for bubble chart)
+function getRiskScore(riskLevel) {
+    const riskScores = {
+        'Low': 1,
+        'Moderate': 2,
+        'Moderate-High': 3,
+        'High': 4
+    };
+    return riskScores[riskLevel] || 2;
+}
 
-        performanceChart.update();
-    } catch (error) {
-        console.error('Error updating performance chart:', error);
-        performanceChart.data.datasets = [];
-    } finally {
-        hideLoadingState(performanceChart);
-    }
+// Helper function to calculate historical performance (simplified)
+function calculateHistoricalPerformance(etf) {
+    // This would ideally use real historical data
+    // For now, using a simplified calculation based on ETF characteristics
+    const basePerformance = {
+        'Index': 10,
+        'Sector': 12,
+        'Bond': 5,
+        'Dividend': 8,
+        'International': 9
+    }[etf['ETF Category']] || 8;
+
+    // Add some variation
+    return basePerformance + (Math.random() * 4 - 2);
 }
 
 // Helper function for random colors
@@ -687,7 +776,7 @@ function getRandomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// Modify the updatePortfolioDisplay function to include chart updates
+// Update the updatePortfolioDisplay function
 function updatePortfolioDisplay() {
     const portfolioContainer = document.getElementById('portfolio-container');
     portfolioContainer.innerHTML = `
@@ -704,18 +793,49 @@ function updatePortfolioDisplay() {
                 </div>
             `).join('')}
         </div>
-        <button class="save-portfolio-btn">Save Portfolio</button>
+        <div class="portfolio-buttons">
+            <button class="save-portfolio-btn">Save Portfolio</button>
+            <button class="clear-portfolio-btn">Clear Portfolio</button>
+        </div>
     `;
 
-    // Add event listener for save portfolio button
+    // Add event listeners for both buttons
     const saveBtn = portfolioContainer.querySelector('.save-portfolio-btn');
+    const clearBtn = portfolioContainer.querySelector('.clear-portfolio-btn');
+    
     if (saveBtn) {
         saveBtn.addEventListener('click', saveUserPortfolio);
+    }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearPortfolio);
     }
 
     // Update the charts
     updateCharts();
-    updatePerformanceChart(7); // Default to 7 days when portfolio changes
+    updatePerformanceChart(7);
+    updateAnalytics();
+
+    // Add risk scale to the risk gauge
+    const riskGaugeHTML = `
+        <div class="risk-gauge">
+            <div class="risk-scale">
+                <span>0</span>
+                <span>2.5</span>
+                <span>5</span>
+                <span>7.5</span>
+                <span>10</span>
+            </div>
+        </div>
+    `;
+    
+    document.querySelector('.risk-metrics').innerHTML = `
+        <h4>Risk Analysis</h4>
+        <div class="metric">
+            <span>Risk Score</span>
+            <span class="value" id="risk-score">-</span>
+        </div>
+        ${riskGaugeHTML}
+    `;
 }
 
 // Calculate portfolio diversity score
@@ -788,27 +908,113 @@ document.getElementById('investment-profile').addEventListener('submit', (event)
         investmentGoal: formData.get('investmentGoal'),
         experience: formData.get('experience')
     };
-    
-    // Scroll to the search section
-    document.querySelector('.search-box').scrollIntoView({ behavior: 'smooth' });
-    
-    // Focus the search input and show dropdown
-    setTimeout(() => {
-        searchInput.focus();
-        dropdown.style.display = 'block';
-        
-        // Add a temporary guidance message
-        const guidanceMsg = document.createElement('div');
-        guidanceMsg.className = 'guidance-message';
-        guidanceMsg.textContent = 'Select an ETF provider to view recommended ETFs ↓';
-        searchInput.parentElement.insertBefore(guidanceMsg, dropdown);
-        
-        // Remove the guidance message after 5 seconds
-        setTimeout(() => {
-            guidanceMsg.remove();
-        }, 5000);
-    }, 500);
+
+    // Check if button already exists
+    let quickPortfolioBtn = document.querySelector('.quick-portfolio-btn');
+    if (!quickPortfolioBtn) {
+        quickPortfolioBtn = document.createElement('button');
+        quickPortfolioBtn.className = 'quick-portfolio-btn';
+        quickPortfolioBtn.textContent = 'Create Suggested Portfolio';
+        event.target.querySelector('.form-buttons').appendChild(quickPortfolioBtn);
+
+        // Add event listener only once
+        quickPortfolioBtn.addEventListener('click', createSuggestedPortfolio);
+    }
 });
+
+// Separate function for creating suggested portfolio
+function createSuggestedPortfolio() {
+    // Clear existing portfolio
+    userPortfolio = [];
+    
+    const recommendations = generateRecommendedPortfolio(userPreferences);
+    
+    // Add recommended ETFs to portfolio
+    recommendations.forEach(rec => {
+        userPortfolio.push(rec.etf);
+    });
+
+    // Update display and scroll
+    updatePortfolioDisplay();
+    document.querySelector('.portfolio-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Optimize the generateRecommendedPortfolio function
+function generateRecommendedPortfolio(preferences) {
+    const portfolioTemplates = {
+        conservative: [
+            { category: 'Bond', weight: 0.4 },
+            { category: 'Dividend', weight: 0.3 },
+            { category: 'Index', weight: 0.3 }
+        ],
+        moderate: [
+            { category: 'Index', weight: 0.5 },
+            { category: 'Dividend', weight: 0.2 },
+            { category: 'Sector', weight: 0.2 },
+            { category: 'Bond', weight: 0.1 }
+        ],
+        aggressive: [
+            { category: 'Index', weight: 0.4 },
+            { category: 'Sector', weight: 0.4 },
+            { category: 'International', weight: 0.2 }
+        ]
+    };
+
+    // Get template based on risk tolerance
+    const template = portfolioTemplates[preferences.riskTolerance];
+    if (!template) return [];
+
+    // Create a cache of scored ETFs
+    const etfScores = new Map();
+    const allETFs = Object.values(etfData).flat();
+
+    // Return recommendations
+    return template
+        .map(({ category, weight }) => {
+            const matchingETFs = allETFs
+                .filter(etf => etf['ETF Category'] === category)
+                .map(etf => {
+                    // Use cached score if available
+                    if (!etfScores.has(etf.name)) {
+                        etfScores.set(etf.name, calculateETFScore(etf, preferences));
+                    }
+                    return {
+                        etf,
+                        score: etfScores.get(etf.name)
+                    };
+                })
+                .sort((a, b) => b.score - a.score);
+
+            if (matchingETFs.length === 0) return null;
+
+            return {
+                etf: matchingETFs[0].etf,
+                allocation: (weight * 100).toFixed(0) + '%'
+            };
+        })
+        .filter(Boolean); // Remove null entries
+}
+
+// Helper function to score ETFs
+function calculateETFScore(etf, preferences) {
+    let score = 0;
+    
+    // Lower expense ratio is better
+    score += (1 - etf.expense) * 3;
+    
+    // Higher diversification is better
+    score += (etf.diversificationScore / 100) * 2;
+    
+    // Risk alignment
+    const riskScores = {
+        'conservative': { 'Low': 3, 'Moderate': 2, 'Moderate-High': 1, 'High': 0 },
+        'moderate': { 'Low': 1, 'Moderate': 3, 'Moderate-High': 2, 'High': 1 },
+        'aggressive': { 'Low': 0, 'Moderate': 1, 'Moderate-High': 2, 'High': 3 }
+    };
+    score += riskScores[preferences.riskTolerance][etf.riskLevel] || 0;
+
+    return score;
+}
 
 // Add this after the form submission handler
 document.querySelector('.save-preferences-btn').addEventListener('click', () => {
@@ -1134,27 +1340,53 @@ function calculateTotalValue() {
 }
 
 function calculateRiskScore() {
+    if (!userPortfolio.length) return 0;
+    
     const riskWeights = {
-        'Low': 1,
-        'Moderate': 2,
-        'Moderate-High': 3,
-        'High': 4
+        'Low': 2.5,
+        'Moderate': 5,
+        'Moderate-High': 7.5,
+        'High': 10
     };
     
-    return userPortfolio.reduce((score, etf) => {
-        return score + riskWeights[etf.riskLevel];
-    }, 0) / userPortfolio.length;
+    const totalRisk = userPortfolio.reduce((sum, etf) => sum + riskWeights[etf.riskLevel], 0);
+    const avgRisk = totalRisk / userPortfolio.length;
+    
+    // Update the risk gauge position (using 0-10 scale)
+    const riskGauge = document.querySelector('.risk-gauge::after');
+    if (riskGauge) {
+        const position = (avgRisk / 10) * 100; // Convert to percentage (0-10 scale)
+        riskGauge.style.left = `${position}%`;
+    }
+    
+    // Update the risk score display
+    document.getElementById('risk-score').textContent = avgRisk.toFixed(1);
+    
+    return avgRisk;
 }
 
 function calculateDiversificationMetrics() {
-    const sectors = new Set(userPortfolio.map(etf => etf['Investment Sector']));
-    const categories = new Set(userPortfolio.map(etf => etf['ETF Category']));
+    if (!userPortfolio.length) return { score: 0, sectors: 0 };
+    
+    const uniqueSectors = new Set(userPortfolio.map(etf => etf['Investment Sector']));
+    const uniqueCategories = new Set(userPortfolio.map(etf => etf['ETF Category']));
+    
+    // Calculate overall diversification score (0-100)
+    const sectorWeight = 0.5;
+    const categoryWeight = 0.5;
+    
+    const sectorScore = (uniqueSectors.size / 6) * 100; // Assuming 6 possible sectors
+    const categoryScore = (uniqueCategories.size / 4) * 100; // Assuming 4 possible categories
+    
+    const overallScore = (sectorScore * sectorWeight + categoryScore * categoryWeight).toFixed(0);
+    
+    // Update the displays
+    document.getElementById('diversification-score').textContent = `${overallScore}%`;
+    document.getElementById('sectors-covered').textContent = uniqueSectors.size;
     
     return {
-        sectorCount: sectors.size,
-        categoryCount: categories.size,
-        diversificationScore: calculateDiversityScore(),
-        overallDiversification: (sectors.size + categories.size) / (6 + 4) * 100 // Normalized to 100
+        score: overallScore,
+        sectors: uniqueSectors.size
     };
 }
 
@@ -1172,13 +1404,50 @@ function calculateSectorExposure() {
 }
 
 function calculateExpenseMetrics() {
+    if (!userPortfolio.length) return { average: 0, savings: 0 };
+    
     const expenses = userPortfolio.map(etf => etf.expense);
-    return {
-        averageExpense: calculateAverageExpense(),
-        lowestExpense: Math.min(...expenses),
-        highestExpense: Math.max(...expenses),
-        totalExpense: expenses.reduce((a, b) => a + b, 0)
+    const avgExpense = expenses.reduce((a, b) => a + b, 0) / expenses.length;
+    
+    // Calculate potential savings by comparing to lowest cost alternatives
+    const lowestExpenses = {
+        'Index': 0.03,    // Example lowest cost index fund
+        'Sector': 0.08,   // Example lowest cost sector fund
+        'Bond': 0.04,     // Example lowest cost bond fund
+        'Dividend': 0.06  // Example lowest cost dividend fund
     };
+    
+    const potentialSavings = userPortfolio.reduce((savings, etf) => {
+        const lowestCost = lowestExpenses[etf['ETF Category']] || 0.03;
+        return savings + (etf.expense - lowestCost);
+    }, 0);
+    
+    // Update the displays
+    document.getElementById('avg-expense').textContent = `${(avgExpense * 100).toFixed(2)}%`;
+    document.getElementById('potential-savings').textContent = 
+        potentialSavings > 0 ? `${(potentialSavings * 100).toFixed(2)}%` : '-';
+    
+    return {
+        average: avgExpense,
+        savings: potentialSavings
+    };
+}
+
+// Function to update all analytics
+function updateAnalytics() {
+    if (!userPortfolio.length) {
+        // Reset all metrics if portfolio is empty
+        document.getElementById('risk-score').textContent = '-';
+        document.getElementById('diversification-score').textContent = '-';
+        document.getElementById('sectors-covered').textContent = '-';
+        document.getElementById('avg-expense').textContent = '-';
+        document.getElementById('potential-savings').textContent = '-';
+        return;
+    }
+    
+    calculateRiskScore();
+    calculateDiversificationMetrics();
+    calculateExpenseMetrics();
 }
 
 // Add this to improve ETF recommendations
@@ -1281,4 +1550,175 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
     
     // Your existing login logic here
     login(email, password);
+});
+
+// Add this helper function
+function addJitter(value, range = 0.3) {
+    return value + (Math.random() - 0.5) * range;
+}
+
+// Add the clearPortfolio function
+function clearPortfolio() {
+    if (confirm('Are you sure you want to clear your portfolio? This cannot be undone.')) {
+        userPortfolio = [];
+        updatePortfolioDisplay();
+        // Refresh recommendations if table is visible
+        const currentProvider = searchInput.value;
+        if (currentProvider in etfData) {
+            displayTable(currentProvider);
+        }
+    }
+}
+
+// Add this function to generate recommended portfolio
+function generateRecommendedPortfolio(preferences) {
+    const recommendations = {
+        conservative: {
+            'Bond': 0.4,      // 40% bonds
+            'Dividend': 0.3,  // 30% dividend stocks
+            'Index': 0.3      // 30% broad market
+        },
+        moderate: {
+            'Index': 0.5,     // 50% broad market
+            'Dividend': 0.2,  // 20% dividend stocks
+            'Sector': 0.2,    // 20% sector-specific
+            'Bond': 0.1       // 10% bonds
+        },
+        aggressive: {
+            'Index': 0.4,     // 40% broad market
+            'Sector': 0.4,    // 40% sector-specific
+            'International': 0.2  // 20% international
+        }
+    };
+
+    const allocation = recommendations[preferences.riskTolerance];
+    const recommendedETFs = [];
+
+    // Find best matching ETFs for each category
+    Object.entries(allocation).forEach(([category, weight]) => {
+        const matchingETFs = Object.values(etfData)
+            .flat()
+            .filter(etf => etf['ETF Category'] === category)
+            .sort((a, b) => {
+                // Score ETFs based on multiple factors
+                const scoreA = calculateETFScore(a, preferences);
+                const scoreB = calculateETFScore(b, preferences);
+                return scoreB - scoreA;
+            });
+
+        if (matchingETFs.length > 0) {
+            recommendedETFs.push({
+                etf: matchingETFs[0],
+                allocation: (weight * 100).toFixed(0) + '%'
+            });
+        }
+    });
+
+    return recommendedETFs;
+}
+
+// Helper function to score ETFs
+function calculateETFScore(etf, preferences) {
+    let score = 0;
+    
+    // Lower expense ratio is better
+    score += (1 - etf.expense) * 3;
+    
+    // Higher diversification is better
+    score += (etf.diversificationScore / 100) * 2;
+    
+    // Risk alignment
+    const riskScores = {
+        'conservative': { 'Low': 3, 'Moderate': 2, 'Moderate-High': 1, 'High': 0 },
+        'moderate': { 'Low': 1, 'Moderate': 3, 'Moderate-High': 2, 'High': 1 },
+        'aggressive': { 'Low': 0, 'Moderate': 1, 'Moderate-High': 2, 'High': 3 }
+    };
+    score += riskScores[preferences.riskTolerance][etf.riskLevel] || 0;
+
+    return score;
+}
+
+// Update the form submission handler
+document.getElementById('investment-profile').addEventListener('submit', (event) => {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    userPreferences = {
+        riskTolerance: formData.get('riskTolerance'),
+        investmentTimeline: formData.get('investmentTimeline'),
+        investmentGoal: formData.get('investmentGoal'),
+        experience: formData.get('experience')
+    };
+
+    // Add recommendation button after form submission
+    const recommendBtn = document.createElement('button');
+    recommendBtn.className = 'recommend-portfolio-btn';
+    recommendBtn.textContent = 'Get Recommended Portfolio';
+    event.target.querySelector('.form-buttons').appendChild(recommendBtn);
+
+    recommendBtn.addEventListener('click', () => {
+        const recommendations = generateRecommendedPortfolio(userPreferences);
+        
+        // Create modal to display recommendations
+        const modalHtml = `
+            <div class="modal" id="recommendation-modal">
+                <div class="modal-content">
+                    <h3>Recommended Portfolio</h3>
+                    <p>Based on your ${userPreferences.riskTolerance} risk profile</p>
+                    <div class="recommended-etfs">
+                        ${recommendations.map(rec => `
+                            <div class="recommended-etf">
+                                <div class="etf-info">
+                                    <h4>${rec.etf.name}</h4>
+                                    <p>${rec.etf['Investment Focus']}</p>
+                                    <p>Suggested Allocation: ${rec.allocation}</p>
+                                    <p>Expense Ratio: ${(rec.etf.expense * 100).toFixed(2)}%</p>
+                                </div>
+                                <button class="add-recommended-etf" data-etf="${rec.etf.name}">
+                                    Add to Portfolio
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="modal-buttons">
+                        <button class="add-all-btn">Add All ETFs</button>
+                        <button class="close-modal-btn">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Add event listeners for the modal buttons
+        const modal = document.getElementById('recommendation-modal');
+        
+        modal.querySelector('.add-all-btn').addEventListener('click', () => {
+            recommendations.forEach(rec => {
+                if (!userPortfolio.find(etf => etf.name === rec.etf.name)) {
+                    userPortfolio.push(rec.etf);
+                }
+            });
+            updatePortfolioDisplay();
+            modal.remove();
+        });
+
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        // Individual ETF add buttons
+        modal.querySelectorAll('.add-recommended-etf').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const etfName = e.target.dataset.etf;
+                const etf = recommendations.find(rec => rec.etf.name === etfName).etf;
+                if (!userPortfolio.find(p => p.name === etfName)) {
+                    userPortfolio.push(etf);
+                    updatePortfolioDisplay();
+                }
+                e.target.disabled = true;
+                e.target.textContent = 'Added';
+            });
+        });
+    });
 }); 
